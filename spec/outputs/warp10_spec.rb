@@ -21,32 +21,42 @@ require "logstash/outputs/warp10"
 
 describe LogStash::Outputs::Warp do
 
-  let(:base_config) do
-  {
-    "warpUri" => "localhost",
-    "token" => "a_token"
-  }
-  end
+  describe "Configuration" do
 
-  context "validates default configuration" do
-
-    it "should register without errors" do
-      output = LogStash::Outputs::Warp.new(base_config)
-      expect { output.register }.to_not raise_error
+    let(:base_config) do
+    {
+      "warpUri" => "localhost",
+      "token" => "a_token"
+    }
     end
 
-    it "should hold default parameters" do
-      output = LogStash::Outputs::Warp.new(base_config)
-      output.register
-      expect(output.instance_variable_get(:@warpUri)).to eq "localhost"
-      expect(output.instance_variable_get(:@warpUri)).to eq "localhost"
-      expect(output.instance_variable_get(:@token)).to eq "a_token"
-      expect(output.instance_variable_get(:@gtsName)).to eq "logstash"
-      expect(output.instance_variable_get(:@labels)).to eq []
-      expect(output.instance_variable_get(:@onlyOneValue)).to eq 'false'
-      expect(output.instance_variable_get(:@valueKey)).to eq "message"
-      expect(output.instance_variable_get(:@flush_size)).to eq 100
-      expect(output.instance_variable_get(:@idle_flush_time)).to eq 1
+    describe "validates default configuration" do
+      it "should register without errors" do
+        output = LogStash::Outputs::Warp.new(base_config)
+        expect { output.register }.to_not raise_error
+      end
+
+      it "should hold default parameters" do
+        output = LogStash::Outputs::Warp.new(base_config)
+        output.register
+        expect(output.instance_variable_get(:@warpUri)).to eq "localhost"
+        expect(output.instance_variable_get(:@warpUri)).to eq "localhost"
+        expect(output.instance_variable_get(:@token)).to eq "a_token"
+        expect(output.instance_variable_get(:@gtsName)).to eq "logstash"
+        expect(output.instance_variable_get(:@labels)).to eq []
+        expect(output.instance_variable_get(:@onlyOneValue)).to eq 'false'
+        expect(output.instance_variable_get(:@valueKey)).to eq "message"
+        expect(output.instance_variable_get(:@flush_size)).to eq 100
+        expect(output.instance_variable_get(:@idle_flush_time)).to eq 1
+      end
+    end
+
+    describe "should fail" do
+      it "when missing mandatory field" do
+        ['warpUri', 'token'].each do | param |
+          expect {LogStash::Outputs::Warp.new(base_config.merge(param => nil))}.to raise_error(LogStash::ConfigurationError)
+        end
+      end
     end
   end
 end
