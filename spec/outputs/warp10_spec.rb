@@ -59,4 +59,77 @@ describe LogStash::Outputs::Warp do
       end
     end
   end
+
+  describe "Output filter" do
+
+    context "with working configuration" do
+      [{
+        'name' => "One label",
+        'config' => {
+          "warpUri" => "localhost", "token" => "a_token", "labels" => ["label1"]
+        },
+        'event' => {
+            "message"=>"Hello World", "@version"=>"1",
+            "@timestamp"=>"2019-02-11T23:34:54.076Z", "host" => "a_hostname",
+            "label1"=>"foo", "label2"=>"bar", "label3"=>"foobar"
+        },
+        'expected_str' => "1549928094076000// logstash{source=logstash,label1=foo} '2019-02-11T23:34:54.076Z a_hostname Hello World' \n"
+      },
+      {
+        'name' => "Keep one value",
+        'config' => {
+          "warpUri" => "localhost", "token" => "a_token", "onlyOneValue" => 'true'
+        },
+        'event' => {
+          "message"=>"Hello World", "@version"=>"1",
+          "@timestamp"=>"2019-02-11T23:34:54.076Z", "host" => "a_hostname",
+          "label1"=>"foo", "label2"=>"bar", "label3"=>"foobar"
+        },
+        'expected_str' => "1549928094076000// logstash{source=logstash} 'Hello World' \n"
+      },
+      {
+        'name' => "Keep one value other than message",
+        'config' => {
+          "warpUri" => "localhost", "token" => "a_token", "onlyOneValue" => 'true', 'valueKey' => 'label2'
+        },
+        'event' => {
+          "message"=>"Hello World", "@version"=>"1",
+          "@timestamp"=>"2019-02-11T23:34:54.076Z", "host" => "a_hostname",
+          "label1"=>"foo", "label2"=>"bar", "label3"=>"foobar"
+        },
+        'expected_str' => "1549928094076000// logstash{source=logstash} 'bar' \n"
+      },
+      {
+        'name' => "Multiple labels",
+        'config' => {
+          "warpUri" => "localhost", "token" => "a_token", "labels" => ["label1", "label3"]
+        },
+        'event' => {
+          "message"=>"Hello World", "@version"=>"1",
+          "@timestamp"=>"2019-02-11T23:34:54.076Z", "host" => "a_hostname",
+          "label1"=>"foo", "label2"=>"bar", "label3"=>"foobar"
+        },
+        'expected_str' => "1549928094076000// logstash{source=logstash,label1=foo,label3=foobar} '2019-02-11T23:34:54.076Z a_hostname Hello World' \n"
+      },
+      {
+        'name' => "Geo Time Series name",
+        'config' => {
+          "warpUri" => "localhost", "token" => "a_token", "gtsName" => "my_gts_name"
+        },
+        'event' => {
+          "message"=>"Hello World", "@version"=>"1",
+          "@timestamp"=>"2019-02-11T23:34:54.076Z", "host" => "a_hostname",
+          "label1"=>"foo", "label2"=>"bar", "label3"=>"foobar"
+        },
+        'expected_str' => "1549928094076000// my_gts_name{source=logstash} '2019-02-11T23:34:54.076Z a_hostname Hello World' \n"
+      }].each do |test|
+        sample(test['name']) do
+          output = LogStash::Outputs::Warp.new(test['config'])
+          output.register
+          expect(output).to receive(:buffer_receive).with(test['expected_str'])
+          output.receive(LogStash::Event.new(test['event']))
+        end
+      end
+    end
+  end
 end
