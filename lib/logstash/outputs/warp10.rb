@@ -48,7 +48,7 @@ class LogStash::Outputs::Warp < LogStash::Outputs::Base
   # Boolean true to keep only one field as value of the entire log
   config :onlyOneValue, :validate => ['true', 'false'], :default => 'false', :required => true
 
-  # The key oy the value to keep if onlyMessage is to true
+  # The key of the value to keep if onlyMessage is to true
   config :valueKey, :validate => :string, :default => "message"
 
   # This setting controls how many events will be buffered before sending a batch
